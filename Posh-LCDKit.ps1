@@ -28,11 +28,12 @@
 function Write-LCD{
     param(
     [string]$String,
-    [byte[]]$ByteArray
+    [byte[]]$ByteArray,
+    [string]$COM="COM3"
     )
-    $lcd=Get-WmiObject -Class Win32_PnPEntity |where {$_.PNPDeviceID -eq 'USB\VID_239A&PID_0001\5&178FFD7B&0&1'}
-    $com=((($lcd.caption -split '\(')[1]) -split '\)')[0]
-    $port= new-Object System.IO.Ports.SerialPort $com,9600,None,8,one
+    #$lcd=Get-WmiObject -Class Win32_PnPEntity |where {$_.PNPDeviceID -eq 'USB\VID_239A&PID_0001\5&178FFD7B&0&1'}
+    #$com=((($lcd.caption -split '\(')[1]) -split '\)')[0]
+    $port= new-Object System.IO.Ports.SerialPort $COM,9600,None,8,one
     if ($String){
         $port.Open()
         $port.write($String)
@@ -49,7 +50,8 @@ function Write-LCD{
 function Write-LCDCommand{
     param(
     [string]$Command,
-    [byte[]]$Value
+    [byte[]]$Value,
+    [string]$COM="COM3"
     )
     if ($Command){
         switch ($Command) {
@@ -78,9 +80,9 @@ function Write-LCDCommand{
         }
     }
     if($fullcommand){
-        $lcd=Get-WmiObject -Class Win32_PnPEntity |where {$_.PNPDeviceID -eq 'USB\VID_239A&PID_0001\5&178FFD7B&0&1'}
-        $com=((($lcd.caption -split '\(')[1]) -split '\)')[0]
-        $port= new-Object System.IO.Ports.SerialPort $com,9600,None,8,one
+        #$lcd=Get-WmiObject -Class Win32_PnPEntity |where {$_.PNPDeviceID -eq 'USB\VID_239A&PID_0001\5&178FFD7B&0&1'}
+        #$com=((($lcd.caption -split '\(')[1]) -split '\)')[0]
+        $port= new-Object System.IO.Ports.SerialPort $COM,9600,None,8,one
         $port.Open()
         $port.write([byte[]]$fullCommand,0,$fullCommand.count)
         $port.Close()
@@ -91,7 +93,8 @@ function Write-LCDCommand{
 function Write-LCDSplashScreen16x2{
     param(
     [string]$texts,
-    [switch]$default
+    [switch]$default,
+    [string]$COM="COM3"
     )
     # if ($tests.length -gt 32) {write-host "write up to 32 characters (for 16x2) or up to 80 characters (for 20x4)"}
     if ($texts.length -gt 32){write-host "write up to 32 characters (for 16x2)";break}
@@ -99,9 +102,9 @@ function Write-LCDSplashScreen16x2{
         write-host "write : "
         write-host $texts
         write-host "to startup splash screen"
-        $lcd=Get-WmiObject -Class Win32_PnPEntity |where {$_.PNPDeviceID -eq 'USB\VID_239A&PID_0001\5&178FFD7B&0&1'}
-        $com=((($lcd.caption -split '\(')[1]) -split '\)')[0]
-        $port= new-Object System.IO.Ports.SerialPort $com,9600,None,8,one
+        #$lcd=Get-WmiObject -Class Win32_PnPEntity |where {$_.PNPDeviceID -eq 'USB\VID_239A&PID_0001\5&178FFD7B&0&1'}
+        #$com=((($lcd.caption -split '\(')[1]) -split '\)')[0]
+        $port= new-Object System.IO.Ports.SerialPort $COM,9600,None,8,one
         $port.Open()
         # write-host $fullcommand
         [byte[]]$Command=0xFE,0x40
@@ -113,9 +116,9 @@ function Write-LCDSplashScreen16x2{
     }
     if ($default){
         write-host "writing default splash screen message"
-        $lcd=Get-WmiObject -Class Win32_PnPEntity |where {$_.PNPDeviceID -eq 'USB\VID_239A&PID_0001\5&178FFD7B&0&1'}
-        $com=((($lcd.caption -split '\(')[1]) -split '\)')[0]
-        $port= new-Object System.IO.Ports.SerialPort $com,9600,None,8,one
+        #$lcd=Get-WmiObject -Class Win32_PnPEntity |where {$_.PNPDeviceID -eq 'USB\VID_239A&PID_0001\5&178FFD7B&0&1'}
+        #$com=((($lcd.caption -split '\(')[1]) -split '\)')[0]
+        $port= new-Object System.IO.Ports.SerialPort $COM,9600,None,8,one
         $port.Open()
         # write-host $fullcommand
         [byte[]]$Command=0xFE,0x40
