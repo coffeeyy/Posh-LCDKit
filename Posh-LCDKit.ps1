@@ -81,11 +81,6 @@ function Set-LCD{
     [string]$COM="COM3"
     )
 
-    #if ($BacklightON -and $BacklightOFF){
-    #    write-host "Error: you cannot use BacklightON and BacklightOFF at the same time"
-    #    $validCommand=$false
-    #}
-
     if ($Clear){
         [byte[]]$fullCommand+=0xFE,0x58
     }#if
@@ -162,43 +157,6 @@ function Set-LCD{
         Remove-Variable port
     }#if
 }#function Set-LCD
-
-    #if ($Command){
-    #    switch ($Command) {
-    #        "Return"        {[byte[]]$fullCommand=0x0D}
-    #        "Backspace"     {[byte[]]$fullCommand=0x08}
-    #        "BacklightON"       {[byte[]]$fullCommand=0xFE,0x42,0x00}
-    #        "BacklightOFF"      {[byte[]]$fullCommand=0xFE,0x46}
-    #        "toHome"          {[byte[]]$fullCommand=0xFE,0x48}
-    #        "UnderlineON"   {[byte[]]$fullCommand=0xFE,0x4A}
-    #        "UnderlineOFF"  {[byte[]]$fullCommand=0xFE,0x4B}
-    #        "Back"          {[byte[]]$fullCommand=0xFE,0x4C}
-    #        "Forward"       {[byte[]]$fullCommand=0xFE,0x4D}
-    #        "scrollON"      {[byte[]]$fullCommand=0xFE,0x51}
-    #        "scrollOFF"     {[byte[]]$fullCommand=0xFE,0x52}
-    #        "blockON"       {[byte[]]$fullCommand=0xFE,0x53}
-    #        "blockOFF"      {[byte[]]$fullCommand=0xFE,0x54}
-    #        "clear"         {[byte[]]$fullCommand=0xFE,0x58}
-    #        "Contrast"      {[byte[]]$fullCommand=0xFE,0x50;$fullCommand=$fullCommand+$Value} # recommand 200
-    #        "ContrastSave"  {[byte[]]$fullCommand=0xFE,0x91;$fullCommand=$fullCommand+$Value}
-    #        "position"      {[byte[]]$fullCommand=0xFE,0x47;$fullCommand=$fullCommand+$Value} # columns,rows start with 1,1
-    #        "brightness"    {[byte[]]$fullCommand=0xFE,0x99;$fullCommand=$fullCommand+$Value}
-    #        "BrightnessSave"{[byte[]]$fullCommand=0xFE,0x98;$fullCommand=$fullCommand+$Value}
-    #        "rgb"           {[byte[]]$fullCommand=0xFE,0xD0;$fullCommand=$fullCommand+$Value}
-    #        "LCDsize"       {[byte[]]$fullCommand=0xFE,0xD1;$fullCommand=$fullCommand+$Value} # columns,rows
-    #        default {$fullcommand=$false}
-    #    }
-    #}
-    #if($fullcommand){
-    #    #$lcd=Get-WmiObject -Class Win32_PnPEntity |where {$_.PNPDeviceID -eq 'USB\VID_239A&PID_0001\5&178FFD7B&0&1'}
-    #    #$com=((($lcd.caption -split '\(')[1]) -split '\)')[0]
-    #    $port= new-Object System.IO.Ports.SerialPort $COM,9600,None,8,one
-    #    $port.Open()
-    #    $port.write([byte[]]$fullCommand,0,$fullCommand.count)
-    #    $port.Close()
-    #    Remove-Variable port
-    #}
-#}
 
 
 #function Write-LCDCommand{
