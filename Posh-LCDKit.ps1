@@ -2,8 +2,7 @@
 
 ## sample ##
 # Write-LCD "tests"
-# Write-LCDCommand lightON
-# Write-LCDSplashScreen16x2 "TEST Splash Screen"
+# Set-LCDSplashScreen16x2 "TEST Splash Screen"
 
 ## command to write a heart (vaild location 1-7)
 # Write-LCD -ByteArray 0xfe,0x4e,1,0x00,0x0a,0x15,0x11,0x11,0x0a,0x04,0x00
@@ -47,50 +46,205 @@ function Write-LCD{
     Remove-Variable port
 }
 
-function Write-LCDCommand{
+function Set-LCD{
+    [CmdletBinding()]
     param(
-    [string]$Command,
-    [byte[]]$Value,
+    [switch]$Clear,
+
+    [ValidateSet('Return','Backspace','GoHome','Back','Forward')]
+    [string]$CursorMovement,
+
+    [ValidateCount(2,2)]
+    [int[]]$CursorPosition,
+
+    [ValidateSet('ON','OFF')]
+    [string]$CursorUnderline,
+
+    [ValidateSet('ON','OFF')]
+    [string]$CursorBlock,
+
+    [ValidateSet('ON','OFF')]
+    [string]$Backlight,
+
+    [ValidateSet('ON','OFF')]
+    [string]$Autoscroll,
+
+    [ValidateRange(0,255)]
+    [int]$Contrast,
+
+    [ValidateRange(0,255)]
+    [int]$Brightness,
+
+    [ValidateCount(3,3)][ValidateRange(0,255)]
+    [int[]]$RGB,
+
     [string]$COM="COM3"
     )
-    if ($Command){
-        switch ($Command) {
-            "Return"        {[byte[]]$fullCommand=0x0D}
-            "Backspace"     {[byte[]]$fullCommand=0x08}
-            "lightON"       {[byte[]]$fullCommand=0xFE,0x42,0x00}
-            "lightOFF"      {[byte[]]$fullCommand=0xFE,0x46}
-            "home"          {[byte[]]$fullCommand=0xFE,0x48}
-            "underlineON"   {[byte[]]$fullCommand=0xFE,0x4A}
-            "underlineOFF"  {[byte[]]$fullCommand=0xFE,0x4B}
-            "back"          {[byte[]]$fullCommand=0xFE,0x4C}
-            "forward"       {[byte[]]$fullCommand=0xFE,0x4D}
-            "scrollON"      {[byte[]]$fullCommand=0xFE,0x51}
-            "scrollOFF"     {[byte[]]$fullCommand=0xFE,0x52}
-            "blockON"       {[byte[]]$fullCommand=0xFE,0x53}
-            "blockOFF"      {[byte[]]$fullCommand=0xFE,0x54}
-            "clear"         {[byte[]]$fullCommand=0xFE,0x58}
-            "Contrast"      {[byte[]]$fullCommand=0xFE,0x50;$fullCommand=$fullCommand+$Value} # recommand 200
-            "ContrastSave"  {[byte[]]$fullCommand=0xFE,0x91;$fullCommand=$fullCommand+$Value}
-            "position"      {[byte[]]$fullCommand=0xFE,0x47;$fullCommand=$fullCommand+$Value} # columns,rows start with 1,1
-            "brightness"    {[byte[]]$fullCommand=0xFE,0x99;$fullCommand=$fullCommand+$Value}
-            "BrightnessSave"{[byte[]]$fullCommand=0xFE,0x98;$fullCommand=$fullCommand+$Value}
-            "rgb"           {[byte[]]$fullCommand=0xFE,0xD0;$fullCommand=$fullCommand+$Value}
-            "LCDsize"       {[byte[]]$fullCommand=0xFE,0xD1;$fullCommand=$fullCommand+$Value} # columns,rows
-            default {$fullcommand=$false}
-        }
+
+    #if ($BacklightON -and $BacklightOFF){
+    #    write-host "Error: you cannot use BacklightON and BacklightOFF at the same time"
+    #    $validCommand=$false
+    #}
+
+    if ($Clear){
+        [byte[]]$fullCommand+=0xFE,0x58
+    }#if
+
+    if ($CursorMovement){
+        switch ($CursorMovement) {
+            "Return"    { [byte[]]$fullCommand+=0x0D }
+            "Backspace" { [byte[]]$fullCommand+=0x08 }
+            "GoHome"    { [byte[]]$fullCommand+=0xFE,0x48 }
+            "Back"      { [byte[]]$fullCommand+=0xFE,0x4C }
+            "Forward"   { [byte[]]$fullCommand+=0xFE,0x4D }
+        }#switch
+    }#if
+
+    if ($CursorPosition){
+        [byte[]]$Command=0xFE,0x47
+        [byte[]]$Value=$CursorPosition[0],$CursorPosition[1]
+        [byte[]]$fullCommand+=($Command+$Value)
     }
-    if($fullcommand){
+
+    if ($Contrast){
+        [byte[]]$Command=0xFE,0x50
+        [byte[]]$Value=$Contrast
+        [byte[]]$fullCommand+=($Command+$Value)
+    }
+
+    if ($Backlight){
+        switch ($Backlight) {
+            "ON"    { [byte[]]$fullCommand+=0xFE,0x42,0x00 }
+            "OFF"   { [byte[]]$fullCommand+=0xFE,0x46 }
+        }#switch
+    }#if
+
+    if ($Autoscroll){
+        switch ($Autoscroll) {
+            "ON"    { [byte[]]$fullCommand+=0xFE,0x51 }
+            "OFF"   { [byte[]]$fullCommand+=0xFE,0x52 }
+        }#switch
+    }#if
+
+    if ($CursorUnderline){
+        switch ($CursorUnderline) {
+            "ON"    { [byte[]]$fullCommand+=0xFE,0x4A }
+            "OFF"   { [byte[]]$fullCommand+=0xFE,0x4B }
+        }#switch
+    }#if
+
+    if ($CursorBlock){
+        switch ($CursorBlock) {
+            "ON"    { [byte[]]$fullCommand+=0xFE,0x53 }
+            "OFF"   { [byte[]]$fullCommand+=0xFE,0x54 }
+        }#switch
+    }#if
+
+    if ($Brightness){
+        [byte[]]$Command=0xFE,0x99
+        [byte[]]$Value=$Brightness
+        [byte[]]$fullCommand+=($Command+$Value)
+    }
+
+    if ($RGB){
+        [byte[]]$Command=0xFE,0xD0
+        [byte[]]$Value=$RGB[0],$RGB[1],$RGB[2]
+        [byte[]]$fullCommand+=($Command+$Value)
+    }
+
+    if ($fullCommand){
         #$lcd=Get-WmiObject -Class Win32_PnPEntity |where {$_.PNPDeviceID -eq 'USB\VID_239A&PID_0001\5&178FFD7B&0&1'}
         #$com=((($lcd.caption -split '\(')[1]) -split '\)')[0]
-        $port= new-Object System.IO.Ports.SerialPort $COM,9600,None,8,one
+        $port = New-Object System.IO.Ports.SerialPort $COM,9600,None,8,one
         $port.Open()
-        $port.write([byte[]]$fullCommand,0,$fullCommand.count)
+        $port.Write([byte[]]$fullCommand,0,$fullCommand.count)
         $port.Close()
         Remove-Variable port
-    }
-}
+    }#if
+}#function Set-LCD
 
-function Write-LCDSplashScreen16x2{
+    #if ($Command){
+    #    switch ($Command) {
+    #        "Return"        {[byte[]]$fullCommand=0x0D}
+    #        "Backspace"     {[byte[]]$fullCommand=0x08}
+    #        "BacklightON"       {[byte[]]$fullCommand=0xFE,0x42,0x00}
+    #        "BacklightOFF"      {[byte[]]$fullCommand=0xFE,0x46}
+    #        "toHome"          {[byte[]]$fullCommand=0xFE,0x48}
+    #        "UnderlineON"   {[byte[]]$fullCommand=0xFE,0x4A}
+    #        "UnderlineOFF"  {[byte[]]$fullCommand=0xFE,0x4B}
+    #        "Back"          {[byte[]]$fullCommand=0xFE,0x4C}
+    #        "Forward"       {[byte[]]$fullCommand=0xFE,0x4D}
+    #        "scrollON"      {[byte[]]$fullCommand=0xFE,0x51}
+    #        "scrollOFF"     {[byte[]]$fullCommand=0xFE,0x52}
+    #        "blockON"       {[byte[]]$fullCommand=0xFE,0x53}
+    #        "blockOFF"      {[byte[]]$fullCommand=0xFE,0x54}
+    #        "clear"         {[byte[]]$fullCommand=0xFE,0x58}
+    #        "Contrast"      {[byte[]]$fullCommand=0xFE,0x50;$fullCommand=$fullCommand+$Value} # recommand 200
+    #        "ContrastSave"  {[byte[]]$fullCommand=0xFE,0x91;$fullCommand=$fullCommand+$Value}
+    #        "position"      {[byte[]]$fullCommand=0xFE,0x47;$fullCommand=$fullCommand+$Value} # columns,rows start with 1,1
+    #        "brightness"    {[byte[]]$fullCommand=0xFE,0x99;$fullCommand=$fullCommand+$Value}
+    #        "BrightnessSave"{[byte[]]$fullCommand=0xFE,0x98;$fullCommand=$fullCommand+$Value}
+    #        "rgb"           {[byte[]]$fullCommand=0xFE,0xD0;$fullCommand=$fullCommand+$Value}
+    #        "LCDsize"       {[byte[]]$fullCommand=0xFE,0xD1;$fullCommand=$fullCommand+$Value} # columns,rows
+    #        default {$fullcommand=$false}
+    #    }
+    #}
+    #if($fullcommand){
+    #    #$lcd=Get-WmiObject -Class Win32_PnPEntity |where {$_.PNPDeviceID -eq 'USB\VID_239A&PID_0001\5&178FFD7B&0&1'}
+    #    #$com=((($lcd.caption -split '\(')[1]) -split '\)')[0]
+    #    $port= new-Object System.IO.Ports.SerialPort $COM,9600,None,8,one
+    #    $port.Open()
+    #    $port.write([byte[]]$fullCommand,0,$fullCommand.count)
+    #    $port.Close()
+    #    Remove-Variable port
+    #}
+#}
+
+
+#function Write-LCDCommand{
+#    param(
+#    [string]$Command,
+#    [byte[]]$Value,
+#    [string]$COM="COM3"
+#    )
+#    if ($Command){
+#        switch ($Command) {
+#            "Return"        {[byte[]]$fullCommand=0x0D}
+#            "Backspace"     {[byte[]]$fullCommand=0x08}
+#            "lightON"       {[byte[]]$fullCommand=0xFE,0x42,0x00}
+#            "lightOFF"      {[byte[]]$fullCommand=0xFE,0x46}
+#            "home"          {[byte[]]$fullCommand=0xFE,0x48}
+#            "underlineON"   {[byte[]]$fullCommand=0xFE,0x4A}
+#            "underlineOFF"  {[byte[]]$fullCommand=0xFE,0x4B}
+#            "back"          {[byte[]]$fullCommand=0xFE,0x4C}
+#            "forward"       {[byte[]]$fullCommand=0xFE,0x4D}
+#            "scrollON"      {[byte[]]$fullCommand=0xFE,0x51}
+#            "scrollOFF"     {[byte[]]$fullCommand=0xFE,0x52}
+#            "blockON"       {[byte[]]$fullCommand=0xFE,0x53}
+#            "blockOFF"      {[byte[]]$fullCommand=0xFE,0x54}
+#            "clear"         {[byte[]]$fullCommand=0xFE,0x58}
+#            "Contrast"      {[byte[]]$fullCommand=0xFE,0x50;$fullCommand=$fullCommand+$Value} # recommand 200
+#            "ContrastSave"  {[byte[]]$fullCommand=0xFE,0x91;$fullCommand=$fullCommand+$Value}
+#            "position"      {[byte[]]$fullCommand=0xFE,0x47;$fullCommand=$fullCommand+$Value} # columns,rows start with 1,1
+#            "brightness"    {[byte[]]$fullCommand=0xFE,0x99;$fullCommand=$fullCommand+$Value}
+#            "BrightnessSave"{[byte[]]$fullCommand=0xFE,0x98;$fullCommand=$fullCommand+$Value}
+#            "rgb"           {[byte[]]$fullCommand=0xFE,0xD0;$fullCommand=$fullCommand+$Value}
+#            "LCDsize"       {[byte[]]$fullCommand=0xFE,0xD1;$fullCommand=$fullCommand+$Value} # columns,rows
+#            default {$fullcommand=$false}
+#        }
+#    }
+#    if($fullcommand){
+#        #$lcd=Get-WmiObject -Class Win32_PnPEntity |where {$_.PNPDeviceID -eq 'USB\VID_239A&PID_0001\5&178FFD7B&0&1'}
+#        #$com=((($lcd.caption -split '\(')[1]) -split '\)')[0]
+#        $port= new-Object System.IO.Ports.SerialPort $COM,9600,None,8,one
+#        $port.Open()
+#        $port.write([byte[]]$fullCommand,0,$fullCommand.count)
+#        $port.Close()
+#        Remove-Variable port
+#    }
+#}
+
+function Set-LCDSplashScreen16x2{
     param(
     [string]$texts,
     [switch]$default,
